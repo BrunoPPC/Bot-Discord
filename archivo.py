@@ -1,36 +1,63 @@
-import discord
+import discord, random
+from discord.ext import commands
 from bot_logic import gen_pass
 from coin import flip_coin
-import coin
 
-# La variable intents almacena los privilegios del bot
+# Configuración de intents
 intents = discord.Intents.default()
-# Activar el privilegio de lectura de mensajes
 intents.message_content = True
-# Crear un bot en la variable cliente y transferirle los privilegios
-client = discord.Client(intents=intents)
 
-@client.event
+# Crear una instancia del bot con un prefijo de comando
+bot = commands.Bot(command_prefix='$', intents=intents)
+
+# Evento cuando el bot está listo
+@bot.event
 async def on_ready():
-    print(f'Hemos iniciado sesión como {client.user}')
+    print(f'Hemos iniciado sesión como {bot.user}')
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
+# Comando `$hello`
+@bot.command()
+async def hello(ctx):
+    await ctx.send("Hi!")
+
+# Comando `$bye`
+@bot.command()
+async def bye(ctx):
+    await ctx.send("\\U0001f642")
+
+# Comando `pass`
+@bot.command()
+async def passw(ctx):
+    password = gen_pass(12)
+    await ctx.send(password)
+
+# Comando `coin`
+@bot.command()
+async def coin(ctx):
+    result = flip_coin()
+    await ctx.send(result)
+
+# Comando por defecto que responde a cualquier otro mensaje
+@bot.command()
+async def default(ctx, *, message: str):
+    await ctx.send(message)
+
+@bot.command()
+async def joined(ctx, member: discord.Member):
+    """Says when a member joined."""
+    await ctx.send(f'{member.name} joined {discord.utils.format_dt(member.joined_at)}')
+
+@bot.command()
+async def roll(ctx, dice: str):
+    """Rolls a dice in NdN format."""
+    try:
+        rolls, limit = map(int, dice.split('d'))
+    except Exception:
+        await ctx.send('Format has to be in NdN!')
         return
-    if message.content.startswith('$hello'):
-        await message.channel.send("Hi!")
-    elif message.content.startswith('$bye'):
-        await message.channel.send("\\U0001f642") 
-    elif message.content.startswith('pass'):
-        password = gen_pass(12)
-        await message.channel.send(password) 
-    elif message.content.startswith('coin'):
-        result = flip_coin()
-        await message.channel.send(result) 
-    else:
-        await message.channel.send(message.content)
-    
 
+    result = ', '.join(str(random.randint(1, limit)) for r in range(rolls))
+    await ctx.send(result)
 
-client.run("MTI2ODM2ODEyMDEyNTU5MTU3NA.GXtO98.Xom5aNxjdWG56qjHwlePqucwCNizOTnfRWBEso")
+# Ejecutar el bot
+bot.run("MTI2ODM2ODEyMDEyNTU5MTU3NA.GXtO98.Xom5aNxjdWG56qjHwlePqucwCNizOTnfRWBEso")
